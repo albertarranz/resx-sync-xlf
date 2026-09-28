@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ResxEditor": {
+      "commandName": "Project",
+      "remoteDebugEnabled": false
+    }
+  }
+}

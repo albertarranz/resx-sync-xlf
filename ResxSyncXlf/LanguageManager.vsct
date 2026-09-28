@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable"
+			  xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <Extern href="stdidcmd.h"/>
+  <Extern href="vsshlids.h"/>
+
+  <Commands package="guidResxSyncPackage">
+	<Buttons>
+	  <Button guid="guidLanguageManagerCmdSet" id="cmdidLanguageManager"
+			  priority="0x0100" type="Button">
+		<!-- Place inside the Tools menu "Other" group -->
+		<Parent guid="guidSHLMainMenu" id="IDG_VS_TOOLS_OTHER2"/>
+		<Strings>
+		  <CommandName>cmdidLanguageManager</CommandName>
+		  <ButtonText>Language Manager</ButtonText>
+		</Strings>
+	  </Button>
+	</Buttons>
+  </Commands>
+
+  <Symbols>
+	<GuidSymbol name="guidResxSyncPackage"
+				value="{a1b2c3d4-e5f6-7890-abcd-ef1234567890}" />
+
+	<GuidSymbol name="guidLanguageManagerCmdSet"
+				value="{c3d4e5f6-a7b8-9012-def0-123456789012}">
+	  <IDSymbol name="cmdidLanguageManager" value="0x0100"/>
+	</GuidSymbol>
+  </Symbols>
+
+</CommandTable>

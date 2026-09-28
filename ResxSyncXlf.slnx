@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="ResxSyncXlf/ResxSyncXlf.csproj">
+    <Deploy />
+  </Project>
+</Solution>

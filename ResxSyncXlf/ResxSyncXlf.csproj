@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>ResxSyncXlf</RootNamespace>
+    <AssemblyName>ResxSyncXlf</AssemblyName>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <!-- VSIX -->
+    <VSSDKBuildToolsAutoSetup>true</VSSDKBuildToolsAutoSetup>
+    <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
+    <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
+    <IncludeDebugSymbolsInLocalVSIXDeployment>true</IncludeDebugSymbolsInLocalVSIXDeployment>
+    <CopyBuildOutputToOutputDirectory>true</CopyBuildOutputToOutputDirectory>
+    <CreateVsixContainer>true</CreateVsixContainer>
+
+    <StartAction>Program</StartAction>
+    <StartProgram>$(DevEnvDir)devenv.exe</StartProgram>
+    <StartArguments>/rootsuffix Exp</StartArguments>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="resources\resx-xlf-sync-icon.ico" />
+    <None Remove="resources\resx-xlf-sync-icon.png" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.5.40034" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="source.extension.vsixmanifest">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <VSCTCompile Include="LanguageManager.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+      <SubType>Designer</SubType>
+    </VSCTCompile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="resources\resx-xlf-sync-icon.ico">
+      <CopyToOutputDirectory></CopyToOutputDirectory>
+    </Content>
+    <Content Include="resources\resx-xlf-sync-icon.png">
+      <CopyToOutputDirectory></CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>
