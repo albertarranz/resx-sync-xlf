@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
@@ -20,6 +21,10 @@ namespace ResxEditor
         // Stores the original disk bytes for localised .resx files captured in OnBeforeSave,
         // so we can restore them in OnAfterSave (the save already happened by then).
         private readonly Dictionary<uint, byte[]> _pendingRestores = new Dictionary<uint, byte[]>();
+
+        // Stores the original disk bytes for the base .resx file captured in OnBeforeSave,
+        // so we can diff old vs new keys in OnAfterSave to detect renames.
+        private readonly Dictionary<uint, byte[]> _pendingBaseSnapshots = new Dictionary<uint, byte[]>();
 
         public ResxFileWatcher(IServiceProvider serviceProvider)
         {
@@ -86,14 +91,62 @@ namespace ResxEditor
                 }
 
                 OutputLogger.Log($"[ResxSync] Resx saved: {path}");
+
+                // Detect renames by diffing the pre-save snapshot against the just-saved content,
+                // then propagate the rename to localised .resx siblings so they aren't orphaned.
+                if (_pendingBaseSnapshots.TryGetValue(docCookie, out byte[] baseSnapshot))
+                {
+                    _pendingBaseSnapshots.Remove(docCookie);
+                    try
+                    {
+                        var oldKeys = XlfSynchronizer.ReadResxKeysFromBytes(baseSnapshot);
+                        var newKeys = XlfSynchronizer.ReadResxKeysFromBytes(System.IO.File.ReadAllBytes(path));
+                        var renames = XlfSynchronizer.DetectRenames(oldKeys, newKeys);
+                        if (renames.Count > 0)
+                        {
+                            foreach (var rename in renames)
+                                OutputLogger.Log($"[ResxSync]   -> Detected rename: '{rename.Key}' -> '{rename.Value}'");
+
+                            var renameResults = XlfSynchronizer.RenameInLocalizedResx(path, renames);
+                            foreach (var (resxPath, renamed) in renameResults)
+                            {
+                                if (renamed > 0)
+                                    OutputLogger.Log($"[ResxSync]   -> Renamed {renamed} entries in {System.IO.Path.GetFileName(resxPath)}");
+                            }
+                        }
+
+                        // Keys that were removed and not part of a rename are plain deletions —
+                        // propagate their removal to the localised .resx siblings too.
+                        var deletedKeys = oldKeys.Keys
+                            .Where(k => !newKeys.ContainsKey(k) && !renames.ContainsKey(k))
+                            .ToList();
+                        if (deletedKeys.Count > 0)
+                        {
+                            foreach (var deletedKey in deletedKeys)
+                                OutputLogger.Log($"[ResxSync]   -> Detected deletion: '{deletedKey}'");
+
+                            var removeResults = XlfSynchronizer.RemoveInLocalizedResx(path, deletedKeys);
+                            foreach (var (resxPath, removedCount) in removeResults)
+                            {
+                                if (removedCount > 0)
+                                    OutputLogger.Log($"[ResxSync]   -> Removed {removedCount} entries from {System.IO.Path.GetFileName(resxPath)}");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        OutputLogger.Log($"[ResxSync] Rename detection error: {ex.Message}");
+                    }
+                }
+
                 var results = XlfSynchronizer.Synchronize(path);
 
-                foreach (var (xlfPath, added) in results)
+                foreach (var (xlfPath, added, removed, updated) in results)
                 {
-                    if (added > 0)
-                        OutputLogger.Log($"[ResxSync]   -> Added {added} entries to {System.IO.Path.GetFileName(xlfPath)}");
+                    if (added > 0 || removed > 0 || updated > 0)
+                        OutputLogger.Log($"[ResxSync]   -> {System.IO.Path.GetFileName(xlfPath)}: added {added}, removed {removed}, updated {updated}");
                     else
-                        OutputLogger.Log($"[ResxSync]   -> No new entries for {System.IO.Path.GetFileName(xlfPath)}");
+                        OutputLogger.Log($"[ResxSync]   -> No changes for {System.IO.Path.GetFileName(xlfPath)}");
                 }
             }
             catch (Exception ex)
@@ -157,7 +210,15 @@ namespace ResxEditor
 
                 string nameNoExt = System.IO.Path.GetFileNameWithoutExtension(path);
                 if (!nameNoExt.Contains("."))
-                    return VSConstants.S_OK; // base resx — let it save normally
+                {
+                    // Base resx: snapshot current disk content so OnAfterSave can diff old vs new
+                    // keys and detect renames.
+                    if (System.IO.File.Exists(path))
+                    {
+                        _pendingBaseSnapshots[docCookie] = System.IO.File.ReadAllBytes(path);
+                    }
+                    return VSConstants.S_OK; // let it save normally
+                }
 
                 // Localised resx: snapshot current disk content before VS overwrites it.
                 if (System.IO.File.Exists(path))
