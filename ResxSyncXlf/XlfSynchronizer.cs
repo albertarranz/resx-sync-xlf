@@ -285,6 +285,14 @@ namespace ResxEditor
                         if (source != null && source.Value != kv.Value)
                         {
                             source.Value = kv.Value;
+
+                            // Mark the translation as needing re-translation: reset target state to "new".
+                            XElement? target = existingTu.Element(Xliff + "target");
+                            if (target != null)
+                            {
+                                target.SetAttributeValue("state", "new");
+                            }
+
                             updated++;
                         }
                         continue;
