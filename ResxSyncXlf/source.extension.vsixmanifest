@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="ResxSyncExtension.a1b2c3d4-e5f6-7890-abcd-ef1234567890" Version="0.6.0" Language="en-US" Publisher="Albert Arranz" />
+    <Identity Id="ResxSyncExtension.a1b2c3d4-e5f6-7890-abcd-ef1234567890" Version="0.7.1" Language="en-US" Publisher="Albert Arranz" />
     <DisplayName>Resx XLF Sync</DisplayName>
     <Description>1. Add Strings.{lang}.resx and {project_name}.{lang}.xlf to an existing project.
 2. Add new language: Strings.{lang}.resx and {lang}.xlf files to an existing project.
