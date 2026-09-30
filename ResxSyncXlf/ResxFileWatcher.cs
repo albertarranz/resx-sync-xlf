@@ -94,6 +94,7 @@ namespace ResxEditor
 
                 // Detect renames by diffing the pre-save snapshot against the just-saved content,
                 // then propagate the rename to localised .resx siblings so they aren't orphaned.
+                Dictionary<string, string>? pendingRenames = null;
                 if (_pendingBaseSnapshots.TryGetValue(docCookie, out byte[] baseSnapshot))
                 {
                     _pendingBaseSnapshots.Remove(docCookie);
@@ -102,6 +103,7 @@ namespace ResxEditor
                         var oldKeys = XlfSynchronizer.ReadResxKeysFromBytes(baseSnapshot);
                         var newKeys = XlfSynchronizer.ReadResxKeysFromBytes(System.IO.File.ReadAllBytes(path));
                         var renames = XlfSynchronizer.DetectRenames(oldKeys, newKeys);
+                        pendingRenames = renames;
                         if (renames.Count > 0)
                         {
                             foreach (var rename in renames)
@@ -139,7 +141,7 @@ namespace ResxEditor
                     }
                 }
 
-                var results = XlfSynchronizer.Synchronize(path);
+                var results = XlfSynchronizer.Synchronize(path, pendingRenames);
 
                 foreach (var (xlfPath, added, removed, updated) in results)
                 {

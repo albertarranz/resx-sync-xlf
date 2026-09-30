@@ -17,7 +17,7 @@ namespace ResxEditor
         /// Synchronize all .xlf files that sit next to <paramref name="resxPath"/>.
         /// Returns a list of (xlfPath, addedCount, removedCount, updatedCount) for logging.
         /// </summary>
-        public static List<(string xlfPath, int added, int removed, int updated)> Synchronize(string resxPath)
+        public static List<(string xlfPath, int added, int removed, int updated)> Synchronize(string resxPath, Dictionary<string, string>? renames = null)
         {
             var results = new List<(string, int, int, int)>();
 
@@ -39,7 +39,7 @@ namespace ResxEditor
 
             foreach (string xlfPath in xlfFiles)
             {
-                var (added, removed, updated) = SyncXlf(resxPath, resxKeys, xlfPath);
+                var (added, removed, updated) = SyncXlf(resxPath, resxKeys, xlfPath, renames);
                 results.Add((xlfPath, added, removed, updated));
             }
 
@@ -233,7 +233,7 @@ namespace ResxEditor
             return removed;
         }
 
-        private static (int added, int removed, int updated) SyncXlf(string resxPath, Dictionary<string, string> resxKeys, string xlfPath)
+        private static (int added, int removed, int updated) SyncXlf(string resxPath, Dictionary<string, string> resxKeys, string xlfPath, Dictionary<string, string>? renames = null)
         {
             int added = 0;
             int removed = 0;
@@ -259,6 +259,20 @@ namespace ResxEditor
                         new XAttribute("id", original),
                         new XAttribute("datatype", "resx"));
                     body.Add(group);
+                }
+
+                // Apply key renames so existing translations are preserved.
+                if (renames != null && renames.Count > 0)
+                {
+                    foreach (XElement tu in group.Elements(Xliff + "trans-unit"))
+                    {
+                        string id = (string?)tu.Attribute("id") ?? string.Empty;
+                        if (renames.TryGetValue(id, out string newId) && !resxKeys.ContainsKey(id))
+                        {
+                            tu.SetAttributeValue("id", newId);
+                            updated++;
+                        }
+                    }
                 }
 
                 // Remove trans-units whose id no longer exists in the resx.
